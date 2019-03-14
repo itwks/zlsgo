@@ -2,6 +2,7 @@ package gvar
 
 import (
 	"testing"
+
 	. "github.com/sohaha/zlsgo/gtest"
 )
 
