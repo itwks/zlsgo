@@ -1,4 +1,4 @@
-package gvar_test
+package gvar
 
 import (
 	"testing"

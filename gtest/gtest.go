@@ -3,13 +3,14 @@ package gtest
 import (
 	"reflect"
 	"runtime"
+	"strconv"
 	"testing"
 )
-
 
 func Equal(t *testing.T, expected, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("%s 期待:%v (type %v) - 结果:%v (type %v)", PrintMyName(t), expected, reflect.TypeOf(expected), actual, reflect.TypeOf(actual))
+
 	}
 }
 
@@ -23,5 +24,5 @@ func PrintMyName(t *testing.T) string {
 	pc, _, _, _ := runtime.Caller(2)
 	f := runtime.FuncForPC(pc)
 	file, line := f.FileLine(pc)
-	return file + ":" + string(line)
+	return file + ":" + strconv.Itoa(line)
 }
