@@ -10,7 +10,9 @@ package znet
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/sohaha/zlsgo/zfile"
 	"github.com/sohaha/zlsgo/zstring"
+	"github.com/sohaha/zlsgo/zutil"
 	"html/template"
 	"io"
 	"net/http"
@@ -27,6 +29,10 @@ type (
 	}
 	renderJSON struct {
 		Data interface{}
+	}
+	renderFile struct {
+		Status interface{}
+		Data   interface{}
 	}
 	renderHTML struct {
 		Template *template.Template
@@ -46,10 +52,6 @@ var (
 	htmlContentType  = "text/html; charset=utf-8"
 	jsonContentType  = "application/json; charset=utf-8"
 )
-
-func (c *Context) File(filepath string) {
-	http.ServeFile(c.Writer, c.Request, filepath)
-}
 
 func (c *Context) render(code int, r render) {
 	c.Info.Mutex.Lock()
@@ -87,6 +89,16 @@ func (r *renderJSON) Content() (content string) {
 	}
 	content = zstring.Bytes2String(j)
 	return
+}
+
+func (r *renderFile) Content() (content string) {
+	content = r.Data.(string)
+	return
+}
+
+func (r *renderFile) Render(c *Context, _ int) error {
+	http.ServeFile(c.Writer, c.Request, r.Data.(string))
+	return nil
 }
 
 func (r *renderJSON) Render(c *Context, code int) error {
@@ -135,6 +147,10 @@ func (r *renderHTML) Render(c *Context, code int) (err error) {
 
 func (c *Context) String(code int, format string, values ...interface{}) {
 	c.render(code, &renderString{Format: format, Data: values})
+}
+
+func (c *Context) File(filepath string) {
+	c.render(zutil.IfVal(zfile.FileExist(filepath), 200, 404).(int), &renderFile{Data: filepath})
 }
 
 func (c *Context) JSON(code int, values interface{}) {

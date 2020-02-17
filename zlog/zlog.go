@@ -70,6 +70,16 @@ func Debug(v ...interface{}) {
 	Log.Debug(v...)
 }
 
+// Dumpln Dumpln
+func Dumpln(v ...interface{}) {
+	Log.Dumpln(v...)
+}
+
+// Dump Dump
+func Dump(v ...interface{}) {
+	Log.Dump(v...)
+}
+
 // Successf Successf
 func Successf(format string, v ...interface{}) {
 	Log.Successf(format, v...)

@@ -3,10 +3,11 @@ package znet
 import (
 	"context"
 	"crypto/tls"
-	"github.com/sohaha/zlsgo/ztime"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/sohaha/zlsgo/ztime"
 
 	"github.com/sohaha/zlsgo/zlog"
 )
@@ -204,7 +205,7 @@ func (e *Engine) SetMode(value string) {
 		level = zlog.LogSuccess
 		e.webMode = releaseCode
 	case DebugMode:
-		level = zlog.LogDebug
+		level = zlog.LogDump
 		e.webMode = debugCode
 	case TestMode:
 		level = zlog.LogInfo

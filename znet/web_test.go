@@ -89,12 +89,46 @@ func TestWeb(tt *testing.T) {
 	r.GetMiddleware()
 }
 
+func TestFile(tt *testing.T) {
+	T := zlsgo.NewTest(tt)
+	r := newServer()
+	w := newRequest(r, "GET", "/TestFile", "/TestFile", func(c *Context) {
+		c.Next()
+		tt.Log("PrevContent", c.PrevContent())
+		tt.Log("PrevStatus", c.PrevStatus())
+	}, func(c *Context) {
+		tt.Log("TestFile")
+		c.File("doc.go")
+	})
+	T.Equal(200, w.Code)
+	tt.Log(len(w.Body.String()))
+
+	w = newRequest(r, "GET", "/TestFile2", "/TestFile2", func(c *Context) {
+		tt.Log("TestFile")
+		c.File("doc_no.go")
+	})
+	T.Equal(404, w.Code)
+	tt.Log(len(w.Body.String()))
+
+	w = newRequest(r, "GET", "/TestFile3", "/TestFile3", func(c *Context) {
+		c.Next()
+		tt.Log("PrevContent", c.PrevContent())
+		tt.Log("PrevStatus", c.PrevStatus())
+		c.String(211, "file")
+	}, func(c *Context) {
+		tt.Log("TestFile")
+		c.File("doc_no.go")
+	})
+	T.Equal(211, w.Code)
+	tt.Log(len(w.Body.String()))
+}
+
 func TestPost(tt *testing.T) {
 	T := zlsgo.NewTest(tt)
 	r := newServer()
 	r.SetMode(DebugMode)
 	w := newRequest(r, "POST", "/Post", "/Post", func(c *Context) {
-		c.SetCustomParam("k1", "k1-data")
+		c.WithValue("k1", "k1-data")
 		tt.Log("==1==")
 		c.Next()
 		tt.Log("--1--")
@@ -108,19 +142,19 @@ func TestPost(tt *testing.T) {
 			Msg:  "replace",
 			Data: nil,
 		})
-		tt.Log(c.GetCustomParam("k1"))
-		tt.Log(c.GetCustomParam("k2"))
-		tt.Log(c.GetCustomParam("k2-2"))
-		tt.Log(c.GetCustomParam("k3"))
-		tt.Log(c.GetCustomParam("k4"))
+		tt.Log(c.Value("k1"))
+		tt.Log(c.Value("k2"))
+		tt.Log(c.Value("k2-2"))
+		tt.Log(c.Value("k3"))
+		tt.Log(c.Value("k4"))
 	}, func(c *Context) {
-		c.SetCustomParam("k2", "k2-data")
+		c.WithValue("k2", "k2-data")
 		tt.Log("==2==")
 		c.Next()
-		c.SetCustomParam("k2-2", "k2-2-data")
+		c.WithValue("k2-2", "k2-2-data")
 	}, func(c *Context) {
 		tt.Log("TestWeb")
-		c.SetCustomParam("k3", "k3-data")
+		c.WithValue("k3", "k3-data")
 		_, _ = c.GetDataRaw()
 		c.JSON(201, Api{
 			Code: 200,
