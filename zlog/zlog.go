@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	Log    = NewZLog(os.Stderr, "", BitDefault, 6, true, 3)
+	Log    = NewZLog(os.Stderr, "", BitDefault, LogDump, true, 3)
 	osExit = os.Exit
 )
 
