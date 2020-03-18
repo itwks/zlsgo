@@ -298,7 +298,15 @@ func (log *Logger) Dumpln(v ...interface{}) {
 	}
 	v = append([]interface{}{"\n"}, v...)
 	v = append(v, "\n")
-	log.Dump(v...)
+	args := formatArgs(v...)
+	_, file, line, ok := callerName(1)
+	if ok {
+		names, err := argNames(file, line)
+		if err == nil {
+			args = prependArgName(names, args)
+		}
+	}
+	_ = log.OutPut(LogDump, fmt.Sprintln(args), true)
 }
 
 // Dump Dump
