@@ -191,3 +191,21 @@ func LabelType(t reflect.Type) bool {
 	}
 	return false
 }
+
+func RunAllMethod(st interface{}, args ...interface{}) (err error) {
+	object := reflect.ValueOf(st)
+	kind := object.Kind()
+	if kind != reflect.Ptr && kind != reflect.Struct {
+		err = errors.New("must be struct")
+		return
+	}
+	for i := 0; i < object.NumMethod(); i++ {
+		v := object.Method(i)
+		var values []reflect.Value
+		for _, v := range args {
+			values = append(values, reflect.ValueOf(v))
+		}
+		v.Call(values)
+	}
+	return
+}

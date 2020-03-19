@@ -2,8 +2,6 @@ package znet
 
 import (
 	"fmt"
-	"github.com/sohaha/zlsgo/zjson"
-	"github.com/sohaha/zlsgo/zstring"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +10,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/sohaha/zlsgo/zjson"
+	"github.com/sohaha/zlsgo/zstring"
 
 	"github.com/sohaha/zlsgo"
 )
@@ -132,9 +133,9 @@ func TestPost(tt *testing.T) {
 		tt.Log("==1==")
 		c.Next()
 		tt.Log("--1--")
-		tt.Log("PrevContent", c.PrevContent())
-		T.Equal(expected, zjson.Get(c.PrevContent(), "msg").String())
-
+		tt.Log("PrevContent", zstring.Bytes2String(c.PrevContent()))
+		T.Equal(expected, zjson.Get(zstring.Bytes2String(c.PrevContent()), "msg").String())
+		tt.Log("PrevContent2", zstring.Bytes2String(c.PrevContent()))
 		tt.Log("PrevStatus", c.PrevStatus())
 		c.SetStatus(211)
 		c.JSON(211, &Api{
@@ -142,6 +143,7 @@ func TestPost(tt *testing.T) {
 			Msg:  "replace",
 			Data: nil,
 		})
+		tt.Log("PrevContent3", zstring.Bytes2String(c.PrevContent()))
 		tt.Log(c.Value("k1"))
 		tt.Log(c.Value("k2"))
 		tt.Log(c.Value("k2-2"))
@@ -151,6 +153,7 @@ func TestPost(tt *testing.T) {
 		c.WithValue("k2", "k2-data")
 		tt.Log("==2==")
 		c.Next()
+		tt.Log("GetContentType", c.GetContentType())
 		c.WithValue("k2-2", "k2-2-data")
 	}, func(c *Context) {
 		tt.Log("TestWeb")
