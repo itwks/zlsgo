@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sohaha/zlsgo/zcache"
 	"github.com/sohaha/zlsgo/zshell"
 	"github.com/sohaha/zlsgo/ztime"
 
@@ -40,20 +41,21 @@ type (
 	}
 	// Engine is a simple HTTP route multiplexer that parses a request path
 	Engine struct {
-	// Log Log
-	Log                *zlog.Logger
-	readTimeout        time.Duration
-	writeTimeout       time.Duration
-	webModeName        string
-	webMode            int
-	timeLocation       *time.Location
-	ShowFavicon        bool
-	MaxMultipartMemory int64
-	customMethodType   string
-	addr               []addrSt
-	router             *router
-	preHandle          func(context *Context)bool
-}
+		// Log Log
+		Log                *zlog.Logger
+		Cache              *zcache.Table
+		readTimeout        time.Duration
+		writeTimeout       time.Duration
+		webModeName        string
+		webMode            int
+		timeLocation       *time.Location
+		ShowFavicon        bool
+		MaxMultipartMemory int64
+		customMethodType   string
+		addr               []addrSt
+		router             *router
+		preHandle          func(context *Context) bool
+	}
 
 	TlsCfg struct {
 		Cert           string
@@ -111,7 +113,8 @@ type (
 
 var (
 	// Log Log
-	Log = zlog.New(zlog.ColorTextWrap(zlog.ColorGreen, "[Z] "))
+	Log   = zlog.New(zlog.ColorTextWrap(zlog.ColorGreen, "[Z] "))
+	Cache = zcache.New("__ZNET__")
 	// Shutdown Done executed after shutting down the server
 	ShutdownDone func()
 	// CloseHotRestart
@@ -142,6 +145,7 @@ func New(serverName ...string) *Engine {
 	}
 	r := &Engine{
 		Log:                log,
+		Cache:              Cache,
 		router:             route,
 		readTimeout:        0 * time.Second,
 		writeTimeout:       0 * time.Second,
