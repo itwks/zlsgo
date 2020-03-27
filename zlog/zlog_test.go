@@ -15,7 +15,6 @@ func TestLogTrack(T *testing.T) {
 func TestLog(T *testing.T) {
 	t := zlsgo.NewTest(T)
 	text := "Text"
-
 	Debug("log with Debug")
 	Debugf("%s", "log with Debug")
 	Info("log with Info")
@@ -28,7 +27,7 @@ func TestLog(T *testing.T) {
 	Errorf("%s", "log with Error")
 	Println("log with Println")
 	Printf("%s", "log with Printf")
-	Dumpln("log with Dump")
+	Dump("log with Dump", t, T,nil)
 
 	SetLogLevel(LogFatal)
 	level := GetLogLevel()

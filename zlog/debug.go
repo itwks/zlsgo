@@ -19,9 +19,50 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/kr/text"
 	"github.com/sohaha/zlsgo/zutil"
 )
+
+type indentWriter struct {
+	w   io.Writer
+	bol bool
+	pre [][]byte
+	sel int
+	off int
+}
+
+func NewIndentWriter(w io.Writer, pre ...[]byte) io.Writer {
+	return &indentWriter{
+		w:   w,
+		pre: pre,
+		bol: true,
+	}
+}
+
+func (w *indentWriter) Write(p []byte) (n int, err error) {
+	for _, c := range p {
+		if w.bol {
+			var i int
+			i, err = w.w.Write(w.pre[w.sel][w.off:])
+			w.off += i
+			if err != nil {
+				return n, err
+			}
+		}
+		_, err = w.w.Write([]byte{c})
+		if err != nil {
+			return n, err
+		}
+		n++
+		w.bol = c == '\n'
+		if w.bol {
+			w.off = 0
+			if w.sel < len(w.pre)-1 {
+				w.sel++
+			}
+		}
+	}
+	return n, nil
+}
 
 func argName(arg ast.Expr) string {
 	name := ""
@@ -122,7 +163,7 @@ func (fo formatter) Format(f fmt.State, c rune) {
 		w := tabwriter.NewWriter(f, 4, 4, 1, ' ', 0)
 		p := &zprinter{tw: w, Writer: w, visited: make(map[visit]int)}
 		p.printValue(fo.v, true, fo.quote)
-		w.Flush()
+		_ = w.Flush()
 		return
 	}
 	fo.passThrough(f, c)
@@ -142,28 +183,28 @@ func (fo formatter) passThrough(f fmt.State, c rune) {
 		s += fmt.Sprintf(".%d", p)
 	}
 	s += string(c)
-	fmt.Fprintf(f, s, fo.v.Interface())
+	_, _ = fmt.Fprintf(f, s, fo.v.Interface())
 }
 
 func (p *zprinter) indent() *zprinter {
 	q := *p
 	q.tw = tabwriter.NewWriter(p.Writer, 4, 4, 1, ' ', 0)
-	q.Writer = text.NewIndentWriter(q.tw, []byte{'\t'})
+	q.Writer = NewIndentWriter(q.tw, []byte{'\t'})
 	return &q
 }
 
 func (p *zprinter) printInline(v reflect.Value, x interface{}, showType bool) {
 	if showType {
-		io.WriteString(p, v.Type().String())
-		fmt.Fprintf(p, "(%#v)", x)
+		_, _ = io.WriteString(p, v.Type().String())
+		_, _ = fmt.Fprintf(p, "(%#v)", x)
 	} else {
-		fmt.Fprintf(p, "%#v", x)
+		_, _ = fmt.Fprintf(p, "%#v", x)
 	}
 }
 
 func (p *zprinter) printValue(v reflect.Value, showType, quote bool) {
 	if p.depth > 10 {
-		io.WriteString(p, "!%v(DEPTH EXCEEDED)")
+		_, _ = io.WriteString(p, "!%v(DEPTH EXCEEDED)")
 		return
 	}
 
@@ -177,13 +218,13 @@ func (p *zprinter) printValue(v reflect.Value, showType, quote bool) {
 	case reflect.Float32, reflect.Float64:
 		p.printInline(v, v.Float(), showType)
 	case reflect.Complex64, reflect.Complex128:
-		fmt.Fprintf(p, "%#v", v.Complex())
+		_, _ = fmt.Fprintf(p, "%#v", v.Complex())
 	case reflect.String:
 		p.fmtString(v.String(), quote)
 	case reflect.Map:
 		t := v.Type()
 		if showType {
-			io.WriteString(p, t.String())
+			_, _ = io.WriteString(p, t.String())
 		}
 		writeByte(p, '{')
 		if zutil.Nonzero(v) {
@@ -205,13 +246,13 @@ func (p *zprinter) printValue(v reflect.Value, showType, quote bool) {
 				showTypeInStruct := t.Elem().Kind() == reflect.Interface
 				pp.printValue(mv, showTypeInStruct, true)
 				if expand {
-					io.WriteString(pp, ",\n")
+					_, _ = io.WriteString(pp, ",\n")
 				} else if i < v.Len()-1 {
-					io.WriteString(pp, ", ")
+					_, _ = io.WriteString(pp, ", ")
 				}
 			}
 			if expand {
-				pp.tw.Flush()
+				_ = pp.tw.Flush()
 			}
 		}
 		writeByte(p, '}')
@@ -228,7 +269,7 @@ func (p *zprinter) printValue(v reflect.Value, showType, quote bool) {
 		}
 
 		if showType {
-			io.WriteString(p, t.String())
+			_, _ = io.WriteString(p, t.String())
 		}
 		writeByte(p, '{')
 		if zutil.Nonzero(v) {
@@ -241,7 +282,7 @@ func (p *zprinter) printValue(v reflect.Value, showType, quote bool) {
 			for i := 0; i < v.NumField(); i++ {
 				showTypeInStruct := true
 				if f := t.Field(i); f.Name != "" {
-					io.WriteString(pp, f.Name)
+					_, _ = io.WriteString(pp, f.Name)
 					writeByte(pp, ':')
 					if expand {
 						writeByte(pp, '\t')
@@ -250,39 +291,39 @@ func (p *zprinter) printValue(v reflect.Value, showType, quote bool) {
 				}
 				pp.printValue(zutil.GetField(v, i), showTypeInStruct, true)
 				if expand {
-					io.WriteString(pp, ",\n")
+					_, _ = io.WriteString(pp, ",\n")
 				} else if i < v.NumField()-1 {
-					io.WriteString(pp, ", ")
+					_, _ = io.WriteString(pp, ", ")
 				}
 			}
 			if expand {
-				pp.tw.Flush()
+				_ = pp.tw.Flush()
 			}
 		}
 		writeByte(p, '}')
 	case reflect.Interface:
 		switch e := v.Elem(); {
 		case e.Kind() == reflect.Invalid:
-			io.WriteString(p, "nil")
+			_, _ = io.WriteString(p, "nil")
 		case e.IsValid():
 			pp := *p
 			pp.depth++
 			pp.printValue(e, showType, true)
 		default:
-			io.WriteString(p, v.Type().String())
-			io.WriteString(p, "(nil)")
+			_, _ = io.WriteString(p, v.Type().String())
+			_, _ = io.WriteString(p, "(nil)")
 		}
 	case reflect.Array, reflect.Slice:
 		t := v.Type()
 		if showType {
-			io.WriteString(p, t.String())
+			_, _ = io.WriteString(p, t.String())
 		}
 		if v.Kind() == reflect.Slice && v.IsNil() && showType {
-			io.WriteString(p, "(nil)")
+			_, _ = io.WriteString(p, "(nil)")
 			break
 		}
 		if v.Kind() == reflect.Slice && v.IsNil() {
-			io.WriteString(p, "nil")
+			_, _ = io.WriteString(p, "nil")
 			break
 		}
 		writeByte(p, '{')
@@ -296,21 +337,21 @@ func (p *zprinter) printValue(v reflect.Value, showType, quote bool) {
 			showTypeInSlice := t.Elem().Kind() == reflect.Interface
 			pp.printValue(v.Index(i), showTypeInSlice, true)
 			if expand {
-				io.WriteString(pp, ",\n")
+				_, _ = io.WriteString(pp, ",\n")
 			} else if i < v.Len()-1 {
-				io.WriteString(pp, ", ")
+				_, _ = io.WriteString(pp, ", ")
 			}
 		}
 		if expand {
-			pp.tw.Flush()
+			_ = pp.tw.Flush()
 		}
 		writeByte(p, '}')
 	case reflect.Ptr:
 		e := v.Elem()
 		if !e.IsValid() {
 			writeByte(p, '(')
-			io.WriteString(p, v.Type().String())
-			io.WriteString(p, ")(nil)")
+			_, _ = io.WriteString(p, v.Type().String())
+			_, _ = io.WriteString(p, ")(nil)")
 		} else {
 			pp := *p
 			pp.depth++
@@ -321,23 +362,24 @@ func (p *zprinter) printValue(v reflect.Value, showType, quote bool) {
 		x := v.Pointer()
 		if showType {
 			writeByte(p, '(')
-			io.WriteString(p, v.Type().String())
-			fmt.Fprintf(p, ")(%#v)", x)
+			_, _ = io.WriteString(p, v.Type().String())
+			_, _ = fmt.Fprintf(p, ")(%#v)", x)
 		} else {
-			fmt.Fprintf(p, "%#v", x)
+			_, _ = fmt.Fprintf(p, "%#v", x)
 		}
 	case reflect.Func:
-		io.WriteString(p, v.Type().String())
-		io.WriteString(p, " {...}")
+		_, _ = io.WriteString(p, v.Type().String())
+		_, _ = io.WriteString(p, " {...}")
 	case reflect.UnsafePointer:
 		p.printInline(v, v.Pointer(), showType)
 	case reflect.Invalid:
-		io.WriteString(p, "nil")
+		_, _ = io.WriteString(p, "nil")
 	}
 }
+
 func (p *zprinter) fmtString(s string, quote bool) {
 	if quote {
 		s = strconv.Quote(s)
 	}
-	io.WriteString(p, s)
+	_, _ = io.WriteString(p, s)
 }
