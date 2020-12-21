@@ -15,6 +15,7 @@ func TestGz(t *testing.T) {
 	gz := "dd.tar.gz"
 	err = GzCompress(".", gz)
 	tt.EqualNil(err)
+	Rmdir("./tmp")
 	err = GzDeCompress(gz, "tmp2")
 	tt.EqualNil(err)
 	err = GzDeCompress(gz+"1", "tmp2")

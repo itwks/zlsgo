@@ -37,6 +37,7 @@ const (
 	LogPanic
 	LogError
 	LogWarn
+	LogTips
 	LogSuccess
 	LogInfo
 	LogDebug
@@ -49,6 +50,7 @@ var Levels = []string{
 	"[PANIC]",
 	"[ERROR]",
 	"[WARN] ",
+	"[TIPS] ",
 	"[SUCCE]",
 	"[INFO] ",
 	"[DEBUG]",
@@ -60,6 +62,7 @@ var LevelColous = []Color{
 	ColorLightRed,
 	ColorRed,
 	ColorYellow,
+	ColorWhite,
 	ColorGreen,
 	ColorBlue,
 	ColorLightCyan,
@@ -98,16 +101,6 @@ type (
 		depth   int
 	}
 )
-
-type LoggerIfe interface {
-	Error(v ...interface{}) error
-	Warning(v ...interface{}) error
-	Info(v ...interface{}) error
-
-	Errorf(format string, a ...interface{}) error
-	Warningf(format string, a ...interface{}) error
-	Infof(format string, a ...interface{}) error
-}
 
 // New Initialize a log object
 func New(moduleName ...string) *Logger {
@@ -345,6 +338,16 @@ func (log *Logger) Info(v ...interface{}) {
 	_ = log.outPut(LogInfo, fmt.Sprintln(v...), true, nil)
 }
 
+// Tipsf Tipsf
+func (log *Logger) Tipsf(format string, v ...interface{}) {
+	_ = log.outPut(LogTips, fmt.Sprintf(format, v...), false, nil)
+}
+
+// Tips Tips
+func (log *Logger) Tips(v ...interface{}) {
+	_ = log.outPut(LogTips, fmt.Sprintln(v...), true, nil)
+}
+
 // Warnf Warnf
 func (log *Logger) Warnf(format string, v ...interface{}) {
 	_ = log.outPut(LogWarn, fmt.Sprintf(format, v...), false, nil)
@@ -477,6 +480,10 @@ func (log *Logger) SetPrefix(prefix string) {
 	log.mu.Lock()
 	defer log.mu.Unlock()
 	log.prefix = prefix
+}
+
+func (log *Logger) GetPrefix() string {
+	return log.prefix
 }
 
 // SetLogLevel Setting log display level

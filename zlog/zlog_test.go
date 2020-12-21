@@ -12,21 +12,23 @@ func TestLogTrack(T *testing.T) {
 	Stack("log with Stack")
 }
 
-func TestLog(T *testing.T) {
+func TestLogs(T *testing.T) {
 	t := zlsgo.NewTest(T)
 	text := "Text"
 	Debug("log with Debug")
-	Debugf("%s", "log with Debug")
+	Debugf("%s\n", "log with Debug")
 	Info("log with Info")
-	Infof("%s", "log with Info")
+	Infof("%s\n", "log with Info")
 	Success("log with Success")
-	Successf("%s", "log with Success")
+	Successf("%s\n", "log with Success")
+	Tips("log with Tips")
+	Tipsf("%s\n", "log with Tips")
 	Warn("log with Warn")
-	Warnf("%s", "log with Warn")
+	Warnf("%s\n", "log with Warn")
 	Error("log with Error")
-	Errorf("%s", "log with Error")
+	Errorf("%s\n", "log with Error")
 	Println("log with Println")
-	Printf("%s", "log with Printf")
+	Printf("%s\n", "log with Printf")
 	Dump("log with Dump", t, T, nil)
 
 	SetLogLevel(LogFatal)
@@ -46,6 +48,7 @@ func TestLog(T *testing.T) {
 	CleanLog(Log)
 	log := New(text)
 	log.SetPrefix(text)
+	t.EqualExit(log.GetPrefix(), text)
 	log.GetLogLevel()
 	log.SetSaveFile("tmp/Log.log")
 	log.ColorBackgroundWrap(ColorBlack, ColorLightGreen, text)
