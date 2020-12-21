@@ -29,12 +29,15 @@ func TestGz(t *testing.T) {
 
 func TestZip(t *testing.T) {
 	tt := zlsgo.NewTest(t)
-	zip := "zcli.zip"
-	err := ZipCompress("../zcli", zip)
+	zip := "tmp.zip"
+	err := WriteFile("./tmp/log.txt", []byte("ok\n"))
+	tt.EqualNil(err)
+	err = WriteFile("./tmp/tmp2/log.txt", []byte("ok\n"))
+	tt.EqualNil(err)
+	err = ZipCompress("./", zip)
 	tt.EqualNil(err)
 	tt.EqualNil(ZipDeCompress(zip, "zip"))
-
-	tt.EqualTrue(FileExist("zip/cli.go"))
+	tt.EqualTrue(FileExist("./zip/tmp/log.txt"))
 	Rmdir(zip)
 	Rmdir("zip")
 }
