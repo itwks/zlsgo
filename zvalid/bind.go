@@ -2,6 +2,7 @@ package zvalid
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -73,20 +74,19 @@ func Var(target interface{}, source Engine, name ...string) error {
 		if source.silent {
 			return nil
 		}
-		return errors.New(source.name + "参数必须传入指针类型")
+		return fmt.Errorf("parameter must pass in a pointer type: %s", source.name)
 	}
 	if !targetValueOf.Elem().CanSet() {
 		if source.silent {
 			return nil
 		}
-		return errors.New(source.name + "无法更改目标变量的值")
+		return fmt.Errorf("target value of the variable cannot be changed: %s", source.name)
 	}
 	targetTypeOf := targetValueOf.Elem().Type().Kind()
 
 	if source.err == nil && source.value != "" {
 		source.err = setRawValue(targetTypeOf, targetValueOf, source.value, source.sep)
 	}
-
 	if source.err != nil && source.defaultValue != nil {
 		if err := setDefaultValue(targetTypeOf, targetValueOf, source.defaultValue); err != nil {
 			if source.silent {
@@ -94,7 +94,7 @@ func Var(target interface{}, source Engine, name ...string) error {
 			}
 			return err
 		}
-		return nil
+		return source.err
 	} else if source.err != nil {
 		if source.silent {
 			return nil

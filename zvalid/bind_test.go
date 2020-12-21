@@ -38,3 +38,30 @@ func TestVar(t *testing.T) {
 	tt.Equal("yes name", data.Name)
 
 }
+
+func TestVarDefault(t *testing.T) {
+	tt := zlsgo.NewTest(t)
+
+	var email string
+	err := Var(&email, Text("email").IsMail())
+	t.Log(email, err)
+	tt.EqualExit(email, "")
+	tt.EqualTrue(err != nil)
+
+	err = Var(&email, Text("email").IsMail().Default("qq@qq.com"))
+	t.Log(email, err)
+	tt.EqualExit(email, "qq@qq.com")
+	tt.EqualTrue(err != nil)
+
+	var nu int
+	err = Var(&nu, Text("Number").IsNumber().Default(123))
+	t.Log(nu, err)
+	tt.EqualTrue(err != nil)
+	tt.EqualExit(nu, 123)
+
+	var b bool
+	err = Var(&b, Text("true").IsBool().Default(false))
+	t.Log(b, err)
+	tt.EqualTrue(err == nil)
+	tt.EqualExit(b, true)
+}
