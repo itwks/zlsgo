@@ -68,7 +68,6 @@ func Var(target interface{}, source Engine, name ...string) error {
 		}
 		return source.err
 	}
-
 	targetValueOf := reflect.ValueOf(target)
 	if targetValueOf.Kind() != reflect.Ptr {
 		if source.silent {

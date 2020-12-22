@@ -48,6 +48,16 @@ func TestVarDefault(t *testing.T) {
 	tt.EqualExit(email, "")
 	tt.EqualTrue(err != nil)
 
+	err = Var(&email, Text("email").IsMail().Default(666))
+	t.Log(email, err)
+	tt.EqualExit(email, "")
+	tt.EqualTrue(err != nil)
+
+	err = Var(&email, Text("email").Silent().IsMail().Default("qq@qq.com"))
+	t.Log(email, err)
+	tt.EqualExit("qq@qq.com", email)
+	tt.EqualTrue(err != nil)
+
 	err = Var(&email, Text("email").IsMail().Default("qq@qq.com"))
 	t.Log(email, err)
 	tt.EqualExit(email, "qq@qq.com")
@@ -64,4 +74,16 @@ func TestVarDefault(t *testing.T) {
 	t.Log(b, err)
 	tt.EqualTrue(err == nil)
 	tt.EqualExit(b, true)
+
+	var i uint
+	err = Var(&i, Text("true").IsNumber().Default(uint(123)))
+	t.Log(b, err)
+	tt.EqualTrue(err != nil)
+	tt.EqualExit(uint(123), i)
+
+	var f float32
+	err = Var(&f, Text("true").IsNumber().Default(float32(123)))
+	t.Log(b, err)
+	tt.EqualTrue(err != nil)
+	tt.EqualExit(float32(123), f)
 }
