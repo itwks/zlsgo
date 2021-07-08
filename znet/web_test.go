@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -234,12 +236,21 @@ func TestFile(tt *testing.T) {
 	r := newServer()
 	w := newRequest(r, "GET", "/TestFile", "/TestFile", func(c *Context) {
 		tt.Log("TestFile")
-		c.File("doc.go")
+		_ = filepath.Walk(zfile.RealPath("."), func(path string, info fs.FileInfo, err error) error {
+			tt.Log(path)
+			if info.IsDir() {
+				return nil
+			}
+			tt.Log(path)
+			c.File(path)
+			return filepath.SkipDir
+		})
+
 	}, func(c *Context) {
 		c.Next()
 		tt.Log("PrevContent", c.PrevContent())
 	})
-	T.Equal(200, w.Code)
+	T.EqualExit(200, w.Code)
 	tt.Log(len(w.Body.String()))
 
 	w = newRequest(r, "GET", "/TestFile2", "/TestFile2", func(c *Context) {
